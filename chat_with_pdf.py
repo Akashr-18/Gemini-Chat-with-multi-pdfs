@@ -4,7 +4,9 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import faiss
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain.prompts import PromptTemplate
+from langchain.chains.question_answering import load_qa_chain
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -25,12 +27,36 @@ def get_text_chunks(content):
     return chunks
 
 def get_vector_store(text_chunk):
-    embed_model = GoogleGenerativeAIEmbeddings(model='embedding-001')
+    embed_model = GoogleGenerativeAIEmbeddings(model='models/embedding-001')
     vector_store = faiss.FAISS.from_texts(text_chunk, embedding=embed_model)
     vector_store.save_local("faiss-index")
 
-def get_response():
-    pass
+def get_conversational_chain():
+    prompt = """
+    Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
+    provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
+    Context: \n{knowledge}\n
+    Question: \n{question}\n
+
+    Answer:
+    """
+    model = ChatGoogleGenerativeAI(model='gemini-pro', temperature=0.1)
+    prompt = PromptTemplate(template=prompt, input_variables=['knowledge', 'question'])
+    chain = load_qa_chain(model, prompt=prompt, chain_type='stuff')
+    return chain
+
+def get_response(user_query):
+    embedding = GoogleGenerativeAIEmbeddings(model = 'model/embedding-001')
+    vector_db = faiss.FAISS.load_local("faiss-index", embeddings=embedding)
+    knowledge = vector_db.similarity_search(user_query)
+
+    chain = get_conversational_chain()
+    response = chain(
+        {'knowledge': knowledge, 'question': user_query},
+        return_only_outputs = True
+    )
+    print("Response: ", response)
+    st.write("Response: ", response["output_text"])
 
 def main():
     st.set_page_config("Chat PDF")
@@ -50,4 +76,8 @@ def main():
                 raw_content = get_pdf_content(pdf_documents)
                 chunks_text = get_text_chunks(raw_content)
                 get_vector_store(chunks_text)
+                print("Successfully")
                 st.success("Done")
+
+if __name__ == "__main__":
+    main()
