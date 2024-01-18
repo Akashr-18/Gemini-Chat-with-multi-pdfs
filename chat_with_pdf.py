@@ -32,31 +32,38 @@ def get_vector_store(text_chunk):
     vector_store.save_local("faiss-index")
 
 def get_conversational_chain():
-    prompt = """
+
+    prompt_template = """
     Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
     provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
-    Context: \n{knowledge}\n
+    Context:\n {context}?\n
     Question: \n{question}\n
 
     Answer:
     """
-    model = ChatGoogleGenerativeAI(model='gemini-pro', temperature=0.1)
-    prompt = PromptTemplate(template=prompt, input_variables=['knowledge', 'question'])
-    chain = load_qa_chain(model, prompt=prompt, chain_type='stuff')
+
+    model = ChatGoogleGenerativeAI(model="gemini-pro",
+                             temperature=0.3)
+
+    prompt = PromptTemplate(template = prompt_template, input_variables = ["context", "question"])
+    chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
+
     return chain
 
+
 def get_response(user_query):
-    embedding = GoogleGenerativeAIEmbeddings(model = 'model/embedding-001')
+    embedding = GoogleGenerativeAIEmbeddings(model = 'models/embedding-001')
     vector_db = faiss.FAISS.load_local("faiss-index", embeddings=embedding)
     knowledge = vector_db.similarity_search(user_query)
 
     chain = get_conversational_chain()
     response = chain(
-        {'knowledge': knowledge, 'question': user_query},
+        {'input_documents': knowledge, 'question': user_query},
         return_only_outputs = True
     )
     print("Response: ", response)
     st.write("Response: ", response["output_text"])
+    
 
 def main():
     st.set_page_config("Chat PDF")
