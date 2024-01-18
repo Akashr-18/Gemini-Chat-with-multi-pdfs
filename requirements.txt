@@ -1,2 +1,4 @@
 langchain
-google_generativeai
+streamlit
+google-generativeai
+python-dotenv
