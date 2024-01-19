@@ -60,7 +60,6 @@ def get_response(user_query):
     print("Response: ", response)
     st.write("Response: ", response["output_text"])
     
-
 def main():
     st.set_page_config("Chat PDF")
     st.header("Chat with PDF using Gemini💁")
