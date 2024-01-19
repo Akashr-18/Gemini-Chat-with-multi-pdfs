@@ -51,7 +51,6 @@ def get_response(user_query):
     embedding = GoogleGenerativeAIEmbeddings(model = 'models/embedding-001')
     vector_db = faiss.FAISS.load_local("faiss-index", embeddings=embedding)
     knowledge = vector_db.similarity_search(user_query)
-    # print("Knowledge: {}".format(knowledge))
     chain = get_conversational_chain(knowledge, user_query)
     response = chain(
         {'input_documents': knowledge, 'question': user_query},
