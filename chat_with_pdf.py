@@ -31,14 +31,13 @@ def get_vector_store(text_chunk):
     vector_store = faiss.FAISS.from_texts(text_chunk, embedding=embed_model)
     vector_store.save_local("faiss-index")
 
-def get_conversational_chain():
+def get_conversational_chain(knowledge, user_query):
 
     prompt_template = """
     Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
     provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
-    Context:\n {context}?\n
-    Question: \n{question}\n
-
+    Context:\n {knowledge}\n
+    Question: \n{user_query}\n
     Answer:
     """
 
@@ -46,7 +45,7 @@ def get_conversational_chain():
                              temperature=0.3)
 
     prompt = PromptTemplate(template = prompt_template, input_variables = ["context", "question"])
-    chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
+    chain = load_qa_chain(model, prompt=prompt)
 
     return chain
 
@@ -55,8 +54,8 @@ def get_response(user_query):
     embedding = GoogleGenerativeAIEmbeddings(model = 'models/embedding-001')
     vector_db = faiss.FAISS.load_local("faiss-index", embeddings=embedding)
     knowledge = vector_db.similarity_search(user_query)
-
-    chain = get_conversational_chain()
+    # print("Knowledge: {}".format(knowledge))
+    chain = get_conversational_chain(knowledge, user_query)
     response = chain(
         {'input_documents': knowledge, 'question': user_query},
         return_only_outputs = True
