@@ -32,7 +32,6 @@ def get_vector_store(text_chunk):
     vector_store.save_local("faiss-index")
 
 def get_conversational_chain(knowledge, user_query):
-
     prompt_template = """
     Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
     provided context just say, "answer is not available in the context", don't provide the wrong answer\n\n
