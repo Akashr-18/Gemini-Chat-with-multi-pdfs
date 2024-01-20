@@ -70,7 +70,6 @@ def main():
         st.title("Menu:")
         pdf_documents = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=True)
         if st.button("Submit & Process"):
-            
             with st.spinner("Processing..."):
                 raw_content = get_pdf_content(pdf_documents)
                 chunks_text = get_text_chunks(raw_content)
